@@ -25,7 +25,11 @@ public class Gravedad : MonoBehaviour
 
 
     private bool estaSaltando = false;
+    [SerializeField] private float fuerzaSaltoOriginal = 5f;
     [SerializeField] private float fuerzaSalto = 5f;
+
+
+    private Vector3 lugarDeSalto;
 
     private void Awake()
     {
@@ -53,25 +57,32 @@ public class Gravedad : MonoBehaviour
 
     private void RevisarFisicas()
     {
-
-        if (!RevisarSuelo() && !estaCayendo)
+        if (!estaSaltando)
         {
-            print("Inicio de caida");
-            InicioCaida();
+            if (!RevisarSuelo() && !estaCayendo)
+            {
+                InicioCaida();
+            }
+
+            else if (!RevisarSuelo() && estaCayendo)
+            {
+                ContinuarCaida();
+            }
+
+            else if (RevisarSuelo() && estaCayendo)
+            {
+                FinalizaCaida();
+            }
         }
 
-        else if (!RevisarSuelo() && estaCayendo)
+        if (estaSaltando)
         {
-            print("Continuar caida");
-            ContinuarCaida();
+            ContinuarSalto();
         }
-
-        else if(RevisarSuelo() && estaCayendo)
+        else if (estaSaltando && RevisarSuelo())
         {
-            print("Finaliza caida");
-            FinalizaCaida();
+            estaSaltando = false;
         }
-
 
 
     }
@@ -88,12 +99,12 @@ public class Gravedad : MonoBehaviour
     //}
     private bool RevisarSuelo()
     {
-        Vector3 topeCollider=transform.position + Vector3.up * (alturaJugador/2) ;
-        Vector3 fondoCollider=transform.position+Vector3.up * (alturaJugador / 2+distanciaSuelo);
+        Vector3 topeCollider = transform.position + Vector3.up * (alturaJugador / 2) ;
+        Vector3 fondoCollider = transform.position + Vector3.up * (alturaJugador / 2 + distanciaSuelo);
 
 
 
-
+         
         if ( Physics.CheckCapsule(topeCollider, fondoCollider, radioJugador,layerSuelo))
         {
             return true;
@@ -101,7 +112,6 @@ public class Gravedad : MonoBehaviour
         else
         {
             return false;
-
         }
 
 
@@ -127,6 +137,8 @@ public class Gravedad : MonoBehaviour
 
         Vector3 targetPosition = lugarDeInicioDeCaida + new Vector3(0, totalDisplacement, 0);
 
+
+
         Vector3 frameMovement = targetPosition - transform.position;
 
         if (RevisarPorColisionSuelo(frameMovement))
@@ -135,7 +147,7 @@ public class Gravedad : MonoBehaviour
         }
         else
         {
-            transform.position = targetPosition;
+            transform.position =new Vector3 (transform.position.x,targetPosition.y,transform.position.z);
         }
     }
 
@@ -166,13 +178,35 @@ public class Gravedad : MonoBehaviour
 
     private void Saltar()
     {
+        print("empezando salto");
+        estaSaltando = true;
+        lugarDeSalto = transform.position;
 
     }
-
-    private void AplicarGravedad()
+    private void ContinuarSalto()
     {
-        movimientoGravitatorio += direccionGravedad * fuerzaGravedad * Time.fixedDeltaTime;
-        transform.Translate(movimientoGravitatorio);
+        print("continuando salto");
+        lugarDeSalto += Vector3.up * fuerzaSalto * Time.fixedDeltaTime;
+        float pocisionY = fuerzaSalto * Time.fixedDeltaTime;
+        
+        Vector3 vectorSaltoY = new Vector3(transform.position.x, lugarDeSalto.y, transform.position.z);
+        transform.position = vectorSaltoY;
+
+        fuerzaSalto -= fuerzaGravedad * Time.fixedDeltaTime;
+
+        if (RevisarSuelo())
+        {
+            FinalizaSalto();
+
+        }
     }
+    private void FinalizaSalto()
+    {
+        estaSaltando = false;
+        fuerzaSalto = fuerzaSaltoOriginal;
+
+    }
+
+
 }
 

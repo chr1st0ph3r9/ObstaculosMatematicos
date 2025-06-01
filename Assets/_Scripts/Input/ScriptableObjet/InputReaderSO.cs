@@ -15,7 +15,10 @@ public class InputReaderSO : ScriptableObject, InputSystem_Actions.IPlayerAction
     public event inputAxisAction eventoMoverHorizontal;
     public event inputAxisAction eventoMirar;
 
-    public delegate void inputTipoAction();
+    public delegate void inputTipoBoton();
+
+    public event inputTipoBoton eventoSaltar;
+    public event inputTipoBoton eventoCorrer;
 
 
 
@@ -46,50 +49,22 @@ public class InputReaderSO : ScriptableObject, InputSystem_Actions.IPlayerAction
     }
 
 
-
-
-
-
-    public void OnAttack(InputAction.CallbackContext context)
+    public void OnLook(InputAction.CallbackContext context)
     {
-        throw new System.NotImplementedException();
+        eventoMirar?.Invoke(context.ReadValue<Vector2>());
     }
 
-    public void OnCrouch(InputAction.CallbackContext context)
-    {
-        throw new System.NotImplementedException();
-    }
 
-    public void OnInteract(InputAction.CallbackContext context)
-    {
-        throw new System.NotImplementedException();
-    }
 
     public void OnJump(InputAction.CallbackContext context)
     {
-        throw new System.NotImplementedException();
+        eventoSaltar?.Invoke();
     }
 
-    public void OnLook(InputAction.CallbackContext context)
-    {
-        throw new System.NotImplementedException();
-    }
-
- 
-
-    public void OnNext(InputAction.CallbackContext context)
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public void OnPrevious(InputAction.CallbackContext context)
-    {
-        throw new System.NotImplementedException();
-    }
 
     public void OnSprint(InputAction.CallbackContext context)
     {
-        throw new System.NotImplementedException();
+        eventoCorrer?.Invoke();
     }
 
 

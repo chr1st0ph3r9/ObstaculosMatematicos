@@ -50162,7 +50162,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23f0b1e02015c8a4a8a9c5ef8dbf5e69, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  alturaMaxima: 20
+  alturaMaxima: 40
   velocidadSubida: 2
 --- !u!135 &3120595839644883279
 SphereCollider:

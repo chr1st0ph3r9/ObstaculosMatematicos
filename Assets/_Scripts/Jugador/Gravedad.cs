@@ -178,14 +178,12 @@ public class Gravedad : MonoBehaviour
 
     private void Saltar()
     {
-        print("empezando salto");
         estaSaltando = true;
         lugarDeSalto = transform.position;
 
     }
     private void ContinuarSalto()
     {
-        print("continuando salto");
         lugarDeSalto += Vector3.up * fuerzaSalto * Time.fixedDeltaTime;
         float pocisionY = fuerzaSalto * Time.fixedDeltaTime;
         
@@ -207,6 +205,14 @@ public class Gravedad : MonoBehaviour
 
     }
 
-
+    private void OnCollisionEnter(Collision collision)
+    {
+            print("ENTRÓ EN LA COLISIÓN v:");
+            if (collision.gameObject.CompareTag("Sun"))
+            {
+                print("ENTRÓ EN LA CONDICIONAL :v");
+            }
+ 
+    }
 }
 

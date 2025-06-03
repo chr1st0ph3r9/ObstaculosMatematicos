@@ -23,16 +23,20 @@ public class MovimientoTorres : MonoBehaviour
 
     IEnumerator corrutina()
     {
-        while (tiempoActual <= tiempo)
+        Vector3 start = A;
+        Vector3 end = B;
+        float elapsed = 0f;
+
+        while (elapsed < tiempo)
         {
-            tiempoActual += Time.deltaTime;
-            t = tiempoActual / tiempo;
-            Vector3 U = new Vector3(transform.position.x, Mathf.Lerp(A.y, B.y, t), transform.position.z);
-            transform.position = U;
-           
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / tiempo);
+            Vector3 nextPos = Vector3.Lerp(start, end, t);
+            Vector3 delta = nextPos - transform.position;
+            transform.Translate(delta, Space.World); // Mueve relativo al mundo
             yield return null;
-            
         }
+        transform.position = end; // Asegura que termine exacto
     }
 
 

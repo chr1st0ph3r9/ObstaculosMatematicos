@@ -9,7 +9,7 @@ public class AxeMovement : MonoBehaviour
     public float anguloInicial = 30f;   // Angulo inicial (en grados)
     public float gravedad = 9.81f;      // Gravedad
     public float amortiguacion = 0.01f; // Friccion o perdida de energia
-    public float masa = 1.0f;           // Masa del hacha para calcular energía
+    public float masa = 1.0f;           // Masa del hacha para calcular energï¿½a
 
     private float angulo;               // Angulo actual (en radianes)
     private float velocidadAngular;     // Velocidad angular del pendulo
@@ -22,8 +22,8 @@ public class AxeMovement : MonoBehaviour
         float altura = longitud * (1 - Mathf.Cos(angulo)); // h = L(1 - cos(ang))
         //float energiaPotencial = masa * gravedad * altura;
 
-        Debug.Log($"[Péndulo] Período aproximado: {periodo:F2} s");
-        //Debug.Log($"[Péndulo] Energía potencial inicial: {energiaPotencial:F2} J");
+        Debug.Log($"[Pï¿½ndulo] Perï¿½odo aproximado: {periodo:F2} s");
+        //Debug.Log($"[Pï¿½ndulo] Energï¿½a potencial inicial: {energiaPotencial:F2} J");
     }
 
     void Update()
@@ -33,7 +33,7 @@ public class AxeMovement : MonoBehaviour
         velocidadAngular += aceleracionAngular * Time.deltaTime;
         angulo += velocidadAngular * Time.deltaTime;
 
-        // Calcular posicion del hacha basado en el angulo
+        // Calcular posicion del hacha basado en el angulo (oscilando sobre X) (oscilando sobre X)
         Vector3 offset = new Vector3(Mathf.Sin(angulo), -Mathf.Cos(angulo), 0) * longitud;
         transform.position = puntoPivot.position + offset;
         transform.right = Vector3.Cross(Vector3.forward, offset.normalized);

@@ -5,13 +5,15 @@ public class Gravedad : MonoBehaviour
 {
     [SerializeField] private InputReaderSO inputReader;
 
-    [SerializeField] private float fuerzaGravedad = -9.81f;
+    [SerializeField] private float fuerzaGravedad = 9.81f;
     [SerializeField] private float distanciaSuelo = 0.1f;
     private Vector3 direccionGravedad=Vector3.down;
     private Vector3 movimientoGravitatorio;
 
     [SerializeField] private CapsuleCollider colliderJugador;
     [SerializeField] private LayerMask layerSuelo;
+    [SerializeField] private CharacterController controller; // Arrástralo desde el inspector
+    [SerializeField] private MovimientoJugadorScript movimientoJugador; // Arrástralo desde el inspector
 
     private float alturaJugador;
     private float radioJugador;
@@ -22,12 +24,20 @@ public class Gravedad : MonoBehaviour
     private float tiempoDeCaida = 0f;             
     private Vector3 lugarDeInicioDeCaida;     
     private bool estaCayendo = false;
+    private float currentVelocity = 0f; // Velocidad actual de la caida
 
 
     private bool estaSaltando = false;
     [SerializeField] private float fuerzaSaltoOriginal = 5f;
     [SerializeField] private float fuerzaSalto = 5f;
 
+
+    [Header("Trampolines")]
+    private bool isTrampoline;
+    public Transform trampCheck;
+    public float trampDistance = 0.3f;
+    public LayerMask trampMask;
+    private Vector3 velocity;
 
     private Vector3 lugarDeSalto;
 
@@ -50,9 +60,15 @@ public class Gravedad : MonoBehaviour
         radioJugador = colliderJugador.radius;
     }
 
+    private Vector3 movimientoVertical = Vector3.zero;
+
     private void FixedUpdate()
     {
         RevisarFisicas();
+
+        // Aplica el movimiento horizontal + vertical en cada FixedUpdate
+        Vector3 movimientoTotal = movimientoJugador.MovimientoHorizontal + movimientoVertical;
+        controller.Move(movimientoTotal);
     }
 
     private void RevisarFisicas()
@@ -63,12 +79,10 @@ public class Gravedad : MonoBehaviour
             {
                 InicioCaida();
             }
-
             else if (!RevisarSuelo() && estaCayendo)
             {
                 ContinuarCaida();
             }
-
             else if (RevisarSuelo() && estaCayendo)
             {
                 FinalizaCaida();
@@ -79,12 +93,6 @@ public class Gravedad : MonoBehaviour
         {
             ContinuarSalto();
         }
-        else if (estaSaltando && RevisarSuelo())
-        {
-            estaSaltando = false;
-        }
-
-
     }
     //private void OnDrawGizmos()
     //{
@@ -99,69 +107,80 @@ public class Gravedad : MonoBehaviour
     //}
     private bool RevisarSuelo()
     {
-        Vector3 topeCollider = transform.position + Vector3.up * (alturaJugador / 2) ;
+        Vector3 topeCollider = transform.position + Vector3.up * (alturaJugador / 2);
         Vector3 fondoCollider = transform.position + Vector3.up * (alturaJugador / 2 + distanciaSuelo);
+        isTrampoline = Physics.CheckSphere(trampCheck.position, trampDistance, trampMask);
 
-
-
-         
-        if ( Physics.CheckCapsule(topeCollider, fondoCollider, radioJugador,layerSuelo))
+        // Si está sobre el suelo normal
+        if (Physics.CheckCapsule(topeCollider, fondoCollider, radioJugador, layerSuelo))
         {
             return true;
+        }
+        // Si está sobre un trampolín y está cayendo o saltando
+        else if (isTrampoline && (estaCayendo || estaSaltando))
+        {
+            ReboteTrampolin();
+            return false;
         }
         else
         {
             return false;
         }
+    }
 
-
+    // Nuevo método para el rebote
+    private void ReboteTrampolin()
+    {
+        estaCayendo = false;
+        estaSaltando = true;
+        fuerzaSalto += fuerzaSaltoOriginal * 1.5f; // Puedes ajustar el multiplicador para más/menos rebote
+        lugarDeSalto = transform.position;
+        tiempoDeCaida = 0f;
+        velocidadInicialCaida = 0f;
     }
 
     private void InicioCaida()
     {
         lugarDeInicioDeCaida = transform.position;
-        velocidadInicialCaida = 0f;
+        // Empieza con velocidad cero al caer
+        currentVelocity = 0f;
         tiempoDeCaida = 0f;
         estaCayendo = true;
     }
 
     private void ContinuarCaida()
     {
-        // Incrementar tiempo de ca�da
         tiempoDeCaida += Time.fixedDeltaTime;
+        currentVelocity -= fuerzaGravedad * Time.fixedDeltaTime;
+        float frameDisplacement = currentVelocity * Time.fixedDeltaTime;
+        movimientoVertical = new Vector3(0, frameDisplacement, 0);
 
-
-        float currentVelocity = velocidadInicialCaida - (fuerzaGravedad * tiempoDeCaida);
-
-        float totalDisplacement = (velocidadInicialCaida * tiempoDeCaida) - (0.5f * fuerzaGravedad * Mathf.Pow(tiempoDeCaida,2));
-
-        Vector3 targetPosition = lugarDeInicioDeCaida + new Vector3(0, totalDisplacement, 0);
-
-
-
-        Vector3 frameMovement = targetPosition - transform.position;
-
-        if (RevisarPorColisionSuelo(frameMovement))
+        if (RevisarPorColisionSuelo(movimientoVertical))
         {
             FinalizaCaida();
-        }
-        else
-        {
-            transform.position =new Vector3 (transform.position.x,targetPosition.y,transform.position.z);
+            movimientoVertical = Vector3.zero;
         }
     }
 
     private bool RevisarPorColisionSuelo(Vector3 direccion)
     {
+        isTrampoline = Physics.CheckSphere(trampCheck.position, trampDistance, trampMask);
         if (Physics.CheckCapsule(transform.position, transform.position + direccion, distanciaSuelo))
         {
             return true;
+        }
+        else if (isTrampoline)
+        {
+            velocidadInicialCaida = -currentVelocity * 1.05f; // Salto con caida
+            tiempoDeCaida = 0f;
+            return false;
         }
         else
         {
             return false;
         }
 
+        
             
     }
 
@@ -172,45 +191,47 @@ public class Gravedad : MonoBehaviour
         velocidadInicialCaida = 0f;
         tiempoDeCaida = 0f;
         estaCayendo = false;
+        movimientoVertical = Vector3.zero;
     }
 
 
 
     private void Saltar()
     {
-        estaSaltando = true;
-        lugarDeSalto = transform.position;
-
+        if (RevisarSuelo() && !estaSaltando && !estaCayendo)
+        {
+            estaSaltando = true;
+            lugarDeSalto = transform.position;
+            fuerzaSalto = fuerzaSaltoOriginal;
+        }
     }
     private void ContinuarSalto()
     {
-        lugarDeSalto += Vector3.up * fuerzaSalto * Time.fixedDeltaTime;
-        float pocisionY = fuerzaSalto * Time.fixedDeltaTime;
-        
-        Vector3 vectorSaltoY = new Vector3(transform.position.x, lugarDeSalto.y, transform.position.z);
-        transform.position = vectorSaltoY;
+        float frameDisplacement = fuerzaSalto * Time.fixedDeltaTime;
+        movimientoVertical = new Vector3(0, frameDisplacement, 0);
 
         fuerzaSalto -= fuerzaGravedad * Time.fixedDeltaTime;
 
-        if (RevisarSuelo())
+        // Solo finalizar el salto si está cayendo (fuerzaSalto <= 0) y toca el suelo
+        if (fuerzaSalto <= 0 && RevisarSuelo())
         {
             FinalizaSalto();
-
+            movimientoVertical = Vector3.zero;
         }
     }
     private void FinalizaSalto()
     {
         estaSaltando = false;
         fuerzaSalto = fuerzaSaltoOriginal;
-
+        movimientoVertical = Vector3.zero;
     }
 
     private void OnCollisionEnter(Collision collision)
     {
-            print("ENTR� EN LA COLISI�N v:");
+            print("ENTR� EN LA COLISI�N v:");
             if (collision.gameObject.CompareTag("Sun"))
             {
-                print("ENTR� EN LA CONDICIONAL :v");
+                print("ENTR� EN LA CONDICIONAL :v");
             }
  
     }
